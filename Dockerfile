@@ -1,4 +1,4 @@
-FROM python:3.9-alpine3.13
+FROM python:3.10-slim
 LABEL maintainer="londonappdeveloper.com"
 
 ENV PYTHONUNBUFFERED 1
@@ -13,15 +13,12 @@ EXPOSE 8000
 ARG DEV=false
 RUN python -m venv /py && \
     /py/bin/pip install --upgrade pip && \
-    apk add --update --no-cache postgresql-client jpeg-dev && \
-    apk add --update --no-cache --virtual .tmp-build-deps \
-        build-base postgresql-dev musl-dev zlib zlib-dev linux-headers && \
+    apt-get update && \
+    apt-get install -y postgresql-client libjpeg-dev zlib1g-dev && \
     /py/bin/pip install -r /tmp/requirements.txt && \
-    if [ $DEV = "true" ]; \
-        then /py/bin/pip install -r /tmp/requirements.dev.txt ; \
-    fi && \
-    rm -rf /tmp && \
-    apk del .tmp-build-deps && \
+    if [ $DEV = "true" ]; then /py/bin/pip install -r /tmp/requirements.dev.txt; fi && \
+    apt-get purge -y --auto-remove && \
+    rm -rf /var/lib/apt/lists/* /tmp && \
     adduser \
         --disabled-password \
         --no-create-home \
